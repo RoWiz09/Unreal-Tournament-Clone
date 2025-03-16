@@ -1,6 +1,6 @@
-from utils import networking
+from utils import window
 
-client = networking.NetworkClient()
+game_window = window.window((600, 500))
 
-while True:
-    pass
+while not game_window.get_window_state():
+    game_window.update()
