@@ -17,7 +17,9 @@ class Material:
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
         tex_data = np.array(list(texture.getdata()),np.int16)
-        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGBA, texture.size[0], texture.size[1], 0, gl.GL_RGBA, gl.GL_UNSIGNED_BYTE, tex_data)
+        format = gl.GL_RGBA if self.img.mode == 'RGBA' else gl.GL_RGB
+        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGB, self.img.size[0], self.img.size[1],
+                    0, format, gl.GL_UNSIGNED_BYTE, tex_data)
        
 
     def apply(self):

@@ -3,7 +3,7 @@ import OpenGL.GL as GL
 import ctypes, glm
 import numpy as np
 import _thread
-import time
+import time, random
 
 class WorldRenderer:
     def __init__(self, verts : np.ndarray):
@@ -49,7 +49,7 @@ class player_renderer:
         self.me = my_player
         self.network = network
 
-        self.frame = 0
+        self.test = random.random()
         
         # Generate Vertex Buffer Object (VBO) and Vertex Array Object (VAO)
         self.vbo = GL.glGenBuffers(1)

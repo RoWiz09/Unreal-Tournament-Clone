@@ -9,6 +9,7 @@ import numpy as np
 import glfw, time
 import PIL.Image
 import glm, PIL
+import _thread
 
 class window:
     def __init__(self, res : tuple):
@@ -30,7 +31,7 @@ class window:
 
         self.network_player_renderers : list[renderer.player_renderer] = []
 
-        #self.world = renderer.WorldRenderer(mesh.load_obj("test.obj"))
+        self.world = renderer.WorldRenderer(mesh.load_obj("test.obj"))
         self.shader = shader.ShaderProgram("shaders\\vertex.glsl", "shaders\\fragment.glsl")
         self.camera = camera.camera()
         self.network = networking.NetworkClient(self, renderer.player_renderer)
@@ -50,6 +51,8 @@ class window:
             }
         ]
 
+        _thread.start_new_thread(self.network.start_reciving, (renderer.player_renderer,))
+
     def update(self):
         glfw.poll_events()
 
@@ -57,11 +60,11 @@ class window:
         deltatime = cur_time-self.last_time
         self.last_time = cur_time
 
-        #mx, my = glfw.get_cursor_pos(self.window)
-        #self.camera.process_keyboard(deltatime)
+        mx, my = glfw.get_cursor_pos(self.window)
+        self.camera.process_keyboard(deltatime)
         window_size = glfw.get_window_size(self.window)
-        #self.camera.process_mouse_movement(mx-window_size[0]/2, -my+window_size[1]/2)
-        #glfw.set_cursor_pos(self.window, window_size[0]/2, window_size[1]/2)
+        self.camera.process_mouse_movement(mx-window_size[0]/2, -my+window_size[1]/2)
+        glfw.set_cursor_pos(self.window, window_size[0]/2, window_size[1]/2)
 
         view = glm.lookAt(self.camera.position, self.camera.position + self.camera.front, self.camera.up)
         projection = glm.perspective(glm.radians(self.camera.zoom), window_size[0] / window_size[1], 0.1, 16384.0)
@@ -78,7 +81,7 @@ class window:
         self.player_object.pos = self.camera.position
         self.player_object.render(self.shader)
         self.shader.set_lights(self.light_data)
-        #self.world.render(self.shader)
+        self.world.render(self.shader)
 
         for player_renderer in self.network_player_renderers:
             if isinstance(player_renderer, renderer.player_renderer):

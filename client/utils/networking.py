@@ -4,7 +4,7 @@ from utils import mesh
 class NetworkClient:
     def __init__(self, window_class, player_renderer_class, packet_rate : float = 0.01):
         self.socket = socket.socket()
-        self.socket.connect(("127.0.0.1", 42069))
+        self.socket.connect(("127.0.0.1", 25565))
         
         self.renderer_class = player_renderer_class
 
@@ -22,7 +22,6 @@ class NetworkClient:
             self.window.network_player_renderers.append(i)
 
         _thread.start_new_thread(self.start_sending, ())
-        _thread.start_new_thread(self.start_reciving, (self.window,))
 
     def add_to_sending(self, sendable_data : bytes):
         self.sending.append(sendable_data)
@@ -39,7 +38,7 @@ class NetworkClient:
 
             time.sleep(self.packet_rate)
     
-    def start_reciving(self, window):
+    def start_reciving(self, renderer):
         msg = self.socket.recv(1024).decode()
         msg = msg.split(",")
 
@@ -48,14 +47,14 @@ class NetworkClient:
             packet = packet.split("|")
             if packet[0] == "playerPosTransformUpdate":
                 player_id = int(packet[1])
-                if not isinstance(window.network_player_renderers[player_id], int):
-                    window.network_player_renderers[player_id].pos.x = float(packet[2])
-                    window.network_player_renderers[player_id].pos.y = float(packet[3])
-                    window.network_player_renderers[player_id].pos.z = float(packet[4])
+                if not isinstance(self.window.network_player_renderers[player_id], int):
+                    self.window.network_player_renderers[player_id].pos.x = float(packet[2])
+                    self.window.network_player_renderers[player_id].pos.y = float(packet[3])
+                    self.window.network_player_renderers[player_id].pos.z = float(packet[4])
                 
                 else:
-                    window.network_player_renderers[player_id] = self.renderer_class(self, mesh.get_cube())
+                    self.window.network_player_renderers[player_id] = renderer(self, mesh.get_cube())
 
-                    window.network_player_renderers[player_id].pos.x = float(packet[2])
-                    window.network_player_renderers[player_id].pos.y = float(packet[3])
-                    window.network_player_renderers[player_id].pos.z = float(packet[4])
+                    self.window.network_player_renderers[player_id].pos.x = float(packet[2])
+                    self.window.network_player_renderers[player_id].pos.y = float(packet[3])
+                    self.window.network_player_renderers[player_id].pos.z = float(packet[4])

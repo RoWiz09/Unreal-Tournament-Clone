@@ -4,7 +4,7 @@ import glm
 class Server:
     def __init__(self, sending_rate : float = 0.01):
         self.socket = socket.socket()
-        self.socket.bind(("127.0.0.1", 42069))
+        self.socket.bind(("127.0.0.1", 25565))
 
         self.packet_rate = sending_rate
 
