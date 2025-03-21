@@ -1,47 +1,5 @@
 import numpy as np
 
-def get_cube():
-    verts = np.array([
-        # Face y+ (Top)
-        1.0, 1.0, 0.0,   1.0, 0.0,  0.0, 1.0, 0.0,  # Bottom-right
-        0.0, 1.0, 0.0,   0.0, 0.0,  0.0, 1.0, 0.0,  # Bottom-left
-        0.0, 1.0, 1.0,   0.0, 1.0,  0.0, 1.0, 0.0,  # Top-left
-        1.0, 1.0, 1.0,   1.0, 1.0,  0.0, 1.0, 0.0,  # Top-right
-
-        # Face y- (Bottom)
-        0.0, 0.0, 1.0,   0.0, 1.0,  0.0, -1.0, 0.0,  # Top-left
-        0.0, 0.0, 0.0,   0.0, 0.0,  0.0, -1.0, 0.0,  # Bottom-left
-        1.0, 0.0, 0.0,   1.0, 0.0,  0.0, -1.0, 0.0,  # Bottom-right
-        1.0, 0.0, 1.0,   1.0, 1.0,  0.0, -1.0, 0.0,  # Top-right
-
-        # Face x+ (Right)
-        1.0, 0.0, 1.0,   0.0, 1.0,  1.0, 0.0, 0.0,  # Top-left
-        1.0, 0.0, 0.0,   0.0, 0.0,  1.0, 0.0, 0.0,  # Bottom-left
-        1.0, 1.0, 0.0,   1.0, 0.0,  1.0, 0.0, 0.0,  # Bottom-right
-        1.0, 1.0, 1.0,   1.0, 1.0,  1.0, 0.0, 0.0,  # Top-right
-
-        # Face x- (Left)
-        0.0, 1.0, 0.0,   1.0, 0.0,  -1.0, 0.0, 0.0,  # Bottom-right
-        0.0, 0.0, 0.0,   0.0, 0.0,  -1.0, 0.0, 0.0,  # Bottom-left
-        0.0, 0.0, 1.0,   0.0, 1.0,  -1.0, 0.0, 0.0,  # Top-left
-        0.0, 1.0, 1.0,   1.0, 1.0,  -1.0, 0.0, 0.0,  # Top-right
-
-        # Face z+ (Front)
-        0.0, 1.0, 1.0,   1.0, 0.0,  0.0, 0.0, 1.0,  # Bottom-right
-        0.0, 0.0, 1.0,   0.0, 0.0,  0.0, 0.0, 1.0,  # Bottom-left
-        1.0, 0.0, 1.0,   0.0, 1.0,  0.0, 0.0, 1.0,  # Top-left
-        1.0, 1.0, 1.0,   1.0, 1.0,  0.0, 0.0, 1.0,  # Top-right
-
-        # Face z- (Back)
-        1.0, 0.0, 0.0,   0.0, 1.0,  0.0, 0.0, -1.0,  # Top-left
-        0.0, 0.0, 0.0,   0.0, 0.0,  0.0, 0.0, -1.0,  # Bottom-left
-        0.0, 1.0, 0.0,   1.0, 0.0,  0.0, 0.0, -1.0,  # Bottom-right
-        1.0, 1.0, 0.0,   1.0, 1.0,  0.0, 0.0, -1.0,  # Top-right
-
-    ], dtype=np.float32)
-
-    return verts
-
 def load_obj(filename):
     vertices = []
     tex_coords = []
@@ -79,7 +37,7 @@ def load_obj(filename):
                     faces.append([face[0], face[1], face[2]])  # Triangle 1
                     faces.append([face[0], face[2], face[3]])  # Triangle 2
                 else:
-                    print(f"Skipping polygon with {len(face)} vertices (not supported)")
+                    raise TypeError(f"ERROR: polygon with {len(face)} vertices not supported")
 
     out = []
     for face in faces:
@@ -96,4 +54,9 @@ def load_obj(filename):
             else:
                 out.extend([0.0, 0.0, 1.0])
 
-    return np.array(out, dtype=np.float32)
+    triangles = []
+    for face in faces:
+        triangle = [vertices[face[i][0] - 1] for i in range(3)]  # Get triangle vertices
+        triangles.append(triangle)
+
+    return np.array(out, dtype=np.float32), triangles

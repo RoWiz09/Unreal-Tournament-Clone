@@ -3,7 +3,6 @@ from utils import material
 from utils import renderer
 from utils import shader
 from utils import camera
-from utils import mesh
 import OpenGL.GL as gl
 import numpy as np
 import glfw, time
@@ -29,13 +28,19 @@ class window:
 
         self.window = window
 
+        self.to_create = []
+
         self.network_player_renderers : list[renderer.player_renderer] = []
 
-        self.world = renderer.WorldRenderer(mesh.load_obj("test.obj"))
+        self.network = networking.NetworkClient(self, renderer.player_renderer)
+
+        map_verts = self.network.request_map()
+        _thread.start_new_thread(self.network.start_reciving, (renderer.player_renderer,))
+        
+        self.map = renderer.WorldRenderer(map_verts)
         self.shader = shader.ShaderProgram("shaders\\vertex.glsl", "shaders\\fragment.glsl")
         self.camera = camera.camera()
-        self.network = networking.NetworkClient(self, renderer.player_renderer)
-        self.player_object = renderer.player_renderer(self.network, mesh.get_cube(), True)
+        self.player_object = renderer.player_renderer(self.network, True)
         self.material = material.Material(glm.vec4(1,1,1,1), PIL.Image.open(".\\container.png"), self.shader)
 
         self.last_time = time.time()
@@ -51,7 +56,8 @@ class window:
             }
         ]
 
-        _thread.start_new_thread(self.network.start_reciving, (renderer.player_renderer,))
+        window_size = glfw.get_window_size(self.window)
+        glfw.set_cursor_pos(self.window, window_size[0]/2, window_size[1]/2)
 
     def update(self):
         glfw.poll_events()
@@ -78,15 +84,27 @@ class window:
         gl.glClear(gl.GL_DEPTH_BUFFER_BIT | gl.GL_COLOR_BUFFER_BIT)
 
         self.material.apply()
-        self.player_object.pos = self.camera.position
+        self.player_object.pos.x = self.camera.position.x
+        self.player_object.pos.y = self.camera.position.y 
+        self.player_object.pos.z = self.camera.position.z
         self.player_object.render(self.shader)
         self.shader.set_lights(self.light_data)
-        self.world.render(self.shader)
+        self.map.render(self.shader)
 
         for player_renderer in self.network_player_renderers:
             if isinstance(player_renderer, renderer.player_renderer):
-                print("test")
                 player_renderer.render(self.shader)
+
+        for player in self.to_create:
+            self.network_player_renderers[player[0]] = renderer.player_renderer(
+                self.network
+            )
+
+            self.network_player_renderers[player[0]].pos.x = 0.0
+            self.network_player_renderers[player[0]].pos.y = 0.0
+            self.network_player_renderers[player[0]].pos.z = 0.0
+
+        self.to_create.clear()
 
         glfw.swap_buffers(self.window)
 

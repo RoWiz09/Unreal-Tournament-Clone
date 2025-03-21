@@ -1,9 +1,13 @@
 from utils import networking
+from utils import collision
+from utils import mesh
 import OpenGL.GL as GL
+import time, random
 import ctypes, glm
 import numpy as np
 import _thread
-import time, random
+
+rendering = False
 
 class WorldRenderer:
     def __init__(self, verts : np.ndarray):
@@ -36,20 +40,23 @@ class WorldRenderer:
         GL.glBindVertexArray(0)
 
     def render(self, shader):
+        global rendering
+        rendering = True
         model = glm.mat4x4(1.0)
         shader.SetMat4x4("model", model)
 
         GL.glBindVertexArray(self.vao)
         GL.glDrawArrays(GL.GL_TRIANGLES, 0, self.verticies)
+        rendering = False
 
 class player_renderer:
-    def __init__(self, network : networking.NetworkClient, verts : np.ndarray, my_player = False):
-        self.pos = glm.vec3(0,0,0)
+    def __init__(self, network : networking.NetworkClient, me = False):
+        verts, triangles = mesh.load_obj("game_cube.obj")
         self.verticies = (len(verts)//8)*3
-        self.me = my_player
+
         self.network = network
 
-        self.test = random.random()
+        self.ticker = 0
         
         # Generate Vertex Buffer Object (VBO) and Vertex Array Object (VAO)
         self.vbo = GL.glGenBuffers(1)
@@ -77,16 +84,27 @@ class player_renderer:
 
         GL.glBindVertexArray(0)
 
+        self.pos = glm.vec3(0,0,0)
+        self.me = me
+
         _thread.start_new_thread(self.send, ())
 
     def render(self, shader):
+        global rendering
         if not self.me:
+            rendering = True
             model = glm.mat4x4(1.0)
             model = glm.translate(model, self.pos)
             shader.SetMat4x4("model", model)
 
             GL.glBindVertexArray(self.vao)
             GL.glDrawArrays(GL.GL_TRIANGLES, 0, self.verticies)
+            rendering = False
+
+        else:
+            self.ticker += 1
+            if self.ticker == 30:
+                self.ticker = 0
 
     def send(self):
         while True:
@@ -99,4 +117,6 @@ class player_renderer:
                 if len(packet.split("|")) == 4:
                     self.network.add_to_sending(packet.encode())
 
-            time.sleep(0.01)
+            time.sleep(0.05)
+
+            
