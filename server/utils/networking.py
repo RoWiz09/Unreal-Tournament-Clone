@@ -1,4 +1,4 @@
-from utils import objLoader
+from utils import modelLoader
 
 import socket, _thread, time, ast
 import glm
@@ -18,7 +18,7 @@ class Server:
 
         # Initalizes server state
         self.server_state = server_states.in_game
-        self.server_map = "test.obj"
+        self.server_map = input("what map do you want to play? ")
         
         # Sets the max players
         self.max_players = 8
@@ -99,8 +99,12 @@ class Server:
                     if packet[0] == "mapRequest":
                         print("requested map!")
                         if self.server_state == server_states.in_game:
+                            server_map, lights = modelLoader.load_gltf(self.server_map)
+                            print(server_map)
                             packet = "map|"
-                            packet += str(objLoader.load_obj(self.server_map))
+                            packet += str(server_map)+"\\"
+                            for light in lights:
+                                packet += light.to_packet()
 
                             map_size_packet = "mapSize|"
                             map_size_packet += str(len(packet.encode()))

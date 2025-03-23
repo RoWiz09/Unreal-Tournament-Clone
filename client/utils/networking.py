@@ -1,4 +1,4 @@
-import socket, _thread, time, ast, numpy as np
+import socket, _thread, time, ast, numpy as np, glm
 from utils import mesh
 
 class NetworkClient:
@@ -13,6 +13,7 @@ class NetworkClient:
         self.packet_rate = packet_rate
 
         self.map = None
+        self.lights_in_map = []
 
         msg = self.socket.recv(1024).decode()
         print(msg)
@@ -35,17 +36,27 @@ class NetworkClient:
         msg = self.socket.recv(1024).decode()
         packet = msg.split("|")
         if packet[0] == "mapSize":
-            print(packet)
             faces = self.socket.recv(int(packet[1])).decode()
-            faces_packet = faces.split("|")
+            packets = faces.split("\\")
+            for packet in packets:
+                packet = packet.split("|")
+                if packet[0] == "map":
+                    faces = ast.literal_eval(packet[1])
+                    faces = np.array(faces, dtype=np.float32)
+                    self.map = faces
+                elif packet[0] == "light":
+                    self.lights_in_map.append(
+                        {
+                            "position": glm.vec3(*ast.literal_eval(packet[3])),
+                            "color": glm.vec3(*ast.literal_eval(packet[2])),
+                            "intensity": 30.0,
+                            "constant": 10.0,
+                            "linear": 0.09,
+                            "quadratic": 0.032
+                        }
+                    )            
 
-            faces = ast.literal_eval(faces_packet[1])
-            print(faces)
-            faces = np.array(faces, dtype=np.float32)
-            
-            self.map = faces
-            
-        return self.map
+        return self.map, self.lights_in_map
 
     def send(self, packet : bytes):
         self.socket.send(packet)

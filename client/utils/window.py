@@ -4,7 +4,6 @@ from utils import renderer
 from utils import shader
 from utils import camera
 import OpenGL.GL as gl
-import numpy as np
 import glfw, time
 import PIL.Image
 import glm, PIL
@@ -34,7 +33,8 @@ class window:
 
         self.network = networking.NetworkClient(self, renderer.player_renderer)
 
-        map_verts = self.network.request_map()
+        map_verts, self.light_data = self.network.request_map()
+
         _thread.start_new_thread(self.network.start_reciving, (renderer.player_renderer,))
         
         self.map = renderer.WorldRenderer(map_verts)
@@ -45,16 +45,6 @@ class window:
 
         self.last_time = time.time()
 
-        self.light_data = [
-            {   # Light 1
-                "position": glm.vec3(3, 3, 3),
-                "color": glm.vec3(1, 1, 1),
-                "intensity": 20.0,
-                "constant": 10.0,
-                "linear": 0.09,
-                "quadratic": 0.032
-            }
-        ]
 
         window_size = glfw.get_window_size(self.window)
         glfw.set_cursor_pos(self.window, window_size[0]/2, window_size[1]/2)
