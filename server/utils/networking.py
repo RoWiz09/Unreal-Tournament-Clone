@@ -63,9 +63,9 @@ class Server:
             quit("Denied connection, the server is full")
         
         # Send the playerID back to the client
-        packet:str = "max_players"
+        packet:str = "max_players"+"|"
         packet += str(self.max_players)+","
-        packet += "my_id"
+        packet += "my_id"+"|"
         packet += str(player_idx)+","
         client_socket.send(packet.encode())
         

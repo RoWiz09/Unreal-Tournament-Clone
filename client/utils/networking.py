@@ -25,8 +25,8 @@ class NetworkClient:
 
         packet = self.socket.recv(1024).decode()
         packet = packet.split(",")
-        max_player_count = packet[1]
-        self.player_idx = packet[3]
+        max_player_count = int(packet[0].split("|")[1])
+        self.player_idx = int(packet[1].split("|")[1])
         for i in range(max_player_count):
             self.window.network_player_renderers.append(i)
 
@@ -36,7 +36,6 @@ class NetworkClient:
         self.sending.append(sendable_data)
 
     def request_map(self):
-        print("test")
         self.send("mapRequest,".encode())
 
         msg = self.socket.recv(1024).decode()
