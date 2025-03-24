@@ -41,7 +41,6 @@ class Server:
 
     def client_thread(self, client_socket : socket.socket, client_addr):
         client_socket.send("welcome to the server!".encode())
-        client_socket.send(str(self.max_players).encode())
         time.sleep(0.01)
 
         player_idx = False
@@ -64,7 +63,11 @@ class Server:
             quit("Denied connection, the server is full")
         
         # Send the playerID back to the client
-        client_socket.send(str(player_idx).encode())
+        packet:str = "max_players"
+        packet += str(self.max_players)+","
+        packet += "my_id"
+        packet += str(player_idx)+","
+        client_socket.send(packet.encode())
         
         # Send the new client's connection packet to all other clients
         packet = "connection|"

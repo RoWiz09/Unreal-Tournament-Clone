@@ -1,10 +1,13 @@
 import socket, _thread, time, ast, numpy as np, glm
 from utils import mesh
+from json import load
 
 class NetworkClient:
     def __init__(self, window_class, player_renderer_class, packet_rate : float = 0.01):
         self.socket = socket.socket()
-        self.socket.connect(("127.0.0.1", 42069))
+        with open("NetworkSettings.json") as networkSettings:
+            self.networkSettings = load(networkSettings)
+        self.socket.connect((self.networkSettings["ip"], self.networkSettings["port"]))
         
         self.renderer_class = player_renderer_class
 
@@ -20,8 +23,10 @@ class NetworkClient:
 
         self.sending = []
 
-        max_player_count = int(self.socket.recv(1024).decode())
-        self.player_idx = self.socket.recv(1024).decode()
+        packet = self.socket.recv(1024).decode()
+        packet = packet.split(",")
+        max_player_count = packet[1]
+        self.player_idx = packet[3]
         for i in range(max_player_count):
             self.window.network_player_renderers.append(i)
 
@@ -31,6 +36,7 @@ class NetworkClient:
         self.sending.append(sendable_data)
 
     def request_map(self):
+        print("test")
         self.send("mapRequest,".encode())
 
         msg = self.socket.recv(1024).decode()
