@@ -4,7 +4,7 @@ from utils import mesh
 class NetworkClient:
     def __init__(self, window_class, player_renderer_class, packet_rate : float = 0.01):
         self.socket = socket.socket()
-        self.socket.connect(("127.0.0.1", 25565))
+        self.socket.connect(("76.92.172.78", 42069))
         
         self.renderer_class = player_renderer_class
 

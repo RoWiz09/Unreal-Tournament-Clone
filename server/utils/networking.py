@@ -11,7 +11,7 @@ class Server:
     def __init__(self, sending_rate : float = 0.05):
         # Creates the server socket
         self.socket = socket.socket()
-        self.socket.bind(("127.0.0.1", 25565))
+        self.socket.bind(("76.92.172.78", 42069))
 
         # Sets the packet sending rate
         self.packet_rate = sending_rate
@@ -109,6 +109,8 @@ class Server:
                             map_size_packet = "mapSize|"
                             map_size_packet += str(len(packet.encode()))
                             client_socket.send(map_size_packet.encode())
+
+                            time.sleep(0.25)
 
                             print("sent map size")
 
