@@ -1,4 +1,5 @@
 from utils import modelLoader
+from typing_extensions import overload
 
 import socket, _thread, time, ast
 import glm
@@ -32,7 +33,7 @@ class Server:
         self.sending = []
 
         # Starts the sending thread
-        _thread.start_new_thread(self.start_sending, ())
+        #_thread.start_new_thread(self.start_sending, ())
 
     def update(self):
         client_socket, client_addr = self.socket.accept()
@@ -72,7 +73,7 @@ class Server:
         # Send the new client's connection packet to all other clients
         packet = "connection|"
         packet += str(player_idx)+","
-        
+
         self.send_to_all(client_socket, packet.encode())
 
         while True:
@@ -120,6 +121,8 @@ class Server:
 
                             client_socket.send(packet.encode())
 
+                self.send_to_all(self.sending)
+
             except Exception as e:
                 # Reset the server slot for this player
                 print("client disconnected!")
@@ -155,6 +158,7 @@ class Server:
 
             time.sleep(self.packet_rate)
 
+    @overload
     def send_to_all(self, client_socket : socket.socket, data : bytes):
         """
         Sends `data` to all clients besides from `client_socket`
@@ -163,3 +167,14 @@ class Server:
             if client != client_socket and client:
                 if isinstance(client, socket.socket):
                     client.send(data) 
+
+    @overload
+    def send_to_all(self, client_socket : socket.socket, data : list[bytes]):
+        """
+        Sends `data` to all clients besides from `client_socket`
+        """
+        for client in self.player_sockets:
+            for packet in data:
+                if client != client_socket and client:
+                    if isinstance(client, socket.socket):
+                        client.send(data) 

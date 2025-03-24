@@ -40,6 +40,7 @@ class NetworkClient:
 
         msg = self.socket.recv(1024).decode()
         packet = msg.split("|")
+        print(packet)
         if packet[0] == "mapSize":
             faces = self.socket.recv(int(packet[1])).decode()
             packets = faces.split("\\")
