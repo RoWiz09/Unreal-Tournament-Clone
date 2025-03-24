@@ -158,7 +158,6 @@ class Server:
 
             time.sleep(self.packet_rate)
 
-    @overload
     def send_to_all(self, client_socket : socket.socket, data : bytes):
         """
         Sends `data` to all clients besides from `client_socket`
@@ -168,8 +167,7 @@ class Server:
                 if isinstance(client, socket.socket):
                     client.send(data) 
 
-    @overload
-    def send_to_all(self, client_socket : socket.socket, data : list[bytes]):
+    def send_to_all_list(self, client_socket : socket.socket, data : list[bytes]):
         """
         Sends `data` to all clients besides from `client_socket`
         """
