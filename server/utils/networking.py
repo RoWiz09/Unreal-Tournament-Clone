@@ -1,5 +1,4 @@
 from utils import modelLoader
-from typing_extensions import overload
 
 import socket, _thread, time, ast
 import glm
@@ -28,6 +27,7 @@ class Server:
         # Initalizes the player list
         self.players : list[tuple[bool, int]] = []
         self.player_sockets : list[socket.socket] = []
+        self.used_sockets : list[bool] = []
 
         # Initalizes the sending list
         self.sending = []
@@ -53,12 +53,14 @@ class Server:
                     player_idx = player
                     self.players[player] = (True, player_idx)
                     self.player_sockets[player] = client_socket
+                    self.used_sockets[player] = False
                     break
             except:
                 player_idx = player
 
                 self.players.append((True, player_idx))
                 self.player_sockets.append(client_socket)
+                self.used_sockets.append(False)
                 break
         else:
             quit("Denied connection, the server is full")
@@ -76,8 +78,13 @@ class Server:
 
         self.send_to_all(client_socket, packet.encode())
 
+        sending = []
+
         while True:
             try:
+                # Let's not leak memory slowly, shall we?
+                sending.clear()
+
                 # Recive the packet sent by the player
                 msg = client_socket.recv(1024)
                 msg = msg.decode()
@@ -99,9 +106,10 @@ class Server:
                             packet += str(pos.x) + "|"
                             packet += str(pos.y) + "|"
                             packet += str(pos.z) + ","
-                            self.add_to_sending(packet.encode())
+                            sending.append(packet.encode())
                     
-                    if packet[0] == "mapRequest":
+                    elif packet[0] == "mapRequest":
+                        self.used_sockets[player_idx] = True
                         print("requested map!")
                         if self.server_state == server_states.in_game:
                             server_map, lights = modelLoader.load_gltf(self.server_map)
@@ -117,11 +125,12 @@ class Server:
 
                             time.sleep(0.25)
 
-                            print("sent map size")
-
                             client_socket.send(packet.encode())
+                            print("sent map")
 
-                self.send_to_all(self.sending)
+                        self.used_sockets[player_idx] = False
+
+                self.send_to_all_list(client_socket,sending)
 
             except Exception as e:
                 # Reset the server slot for this player
@@ -172,7 +181,8 @@ class Server:
         Sends `data` to all clients besides from `client_socket`
         """
         for client in self.player_sockets:
-            for packet in data:
-                if client != client_socket and client:
-                    if isinstance(client, socket.socket):
-                        client.send(data) 
+            if not self.used_sockets[self.player_sockets.index(client)]:
+                for packet in data:
+                    if client != client_socket and client:
+                        if isinstance(client, socket.socket):
+                            client.send(packet) 
