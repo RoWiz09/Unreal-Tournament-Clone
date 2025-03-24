@@ -11,7 +11,7 @@ class Server:
     def __init__(self, sending_rate : float = 0.05):
         # Creates the server socket
         self.socket = socket.socket()
-        self.socket.bind(("76.92.172.78", 42069))
+        self.socket.bind(("0.0.0.0", 42069))
 
         # Sets the packet sending rate
         self.packet_rate = sending_rate
