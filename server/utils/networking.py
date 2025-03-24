@@ -71,7 +71,8 @@ class Server:
         
         # Send the new client's connection packet to all other clients
         packet = "connection|"
-        packet += str(player_idx)
+        packet += str(player_idx)+","
+        
         self.send_to_all(client_socket, packet.encode())
 
         while True:
