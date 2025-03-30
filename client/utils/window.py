@@ -17,7 +17,7 @@ class window:
         glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
         glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
 
-        window = glfw.create_window(*res, "Real Tournament", None, None)
+        window = glfw.create_window(*res, "Real Tournament - Ghost game lore may be included!", None, None)
         glfw.make_context_current(window)
 
         gl.glClearColor(100/255, 100/255, 255/255, 255/255)

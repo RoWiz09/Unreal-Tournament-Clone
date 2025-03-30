@@ -27,7 +27,7 @@ class Server:
         self.map_votes = self.get_voted_maps()
 
         # Sets the max players
-        self.max_players = 1
+        self.max_players = 8
         self.socket.listen(self.max_players)
 
         # Initalizes the player list
@@ -140,10 +140,15 @@ class Server:
                             sending.append(packet.encode())
 
                     elif packet[0] == "getServerState":
-                        client_socket.send(str(self.server_state).encode())
+                        self.used_sockets[player_idx] = True
+                        packet = "serverState|"+str(self.server_state)
+                        client_socket.send(packet.encode())
+                        self.used_sockets[player_idx] = False
 
                     elif packet[0] == "getServerMaps":
+                        self.used_sockets[player_idx] = True
                         client_socket.send(",".join(self.maps).encode())
+                        self.used_sockets[player_idx] = False
 
                     elif packet[0] == "voted":
                         print(packet[1])
@@ -154,12 +159,9 @@ class Server:
                             print(self.voted_players, len(self.get_socket_list()))
 
                         self.lobby_handler()
-                        print("test")
                     
                     elif packet[0] == "mapRequest":
                         self.used_sockets[player_idx] = True
-                        print("requested map!")
-                        print(self.server_map)
                         if self.server_state == server_states.in_game:
                             server_map, lights = modelLoader.load_gltf(self.server_map.removesuffix(".gltf"))
                             print(server_map)
@@ -186,8 +188,6 @@ class Server:
                 print("client disconnected!")
                 self.player_sockets[player_idx] = (False, player_idx)
                 self.players[player_idx] = (False, player_idx)
-
-                raise e
                 
                 # Tell all players that this player left the server
                 packet = "playerDisconnect|"
@@ -221,9 +221,10 @@ class Server:
         Sends `data` to all clients besides from `client_socket`
         """
         for client in self.player_sockets:
-            if client != client_socket and client:
-                if isinstance(client, socket.socket):
-                    client.send(data) 
+            if not self.used_sockets[self.player_sockets.index(client)]:
+                if client != client_socket and client:
+                    if isinstance(client, socket.socket):
+                        client.send(data) 
 
     def send_to_all_list(self, client_socket : socket.socket, data : list[bytes]):
         """

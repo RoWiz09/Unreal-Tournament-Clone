@@ -57,7 +57,6 @@ class NetworkClient:
 
         msg = self.socket.recv(1024).decode()
         packet = msg.split("|")
-        print(packet)
         if packet[0] == "mapSize":
             faces = self.socket.recv(int(packet[1])).decode()
             packets = faces.split("\\")
@@ -84,8 +83,20 @@ class NetworkClient:
     def get_server_state(self):
         self.socket.send("getServerState".encode())
 
-        msg = int(self.socket.recv(1024).decode())
-        return msg
+        msg = self.recv_spec_packet("serverState")
+        return int(msg[1])
+    
+    def recv_spec_packet(self, packet_type):
+        msg = self.socket.recv(1024).decode()
+        msg = msg.split(",")
+        for packet in msg:
+            packet = packet.split("|")
+            if packet[0] == packet_type:
+                return packet
+            
+        packet = self.recv_spec_packet(packet_type)
+        return packet
+
     
     def get_maps(self):
         self.socket.send("getServerMaps".encode())
