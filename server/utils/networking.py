@@ -1,7 +1,7 @@
 from utils import modelLoader
 
 import socket, _thread, time, ast
-import glm
+import glm, os.path, random
 
 class server_states:
     in_lobby = 0
@@ -17,11 +17,17 @@ class Server:
         self.packet_rate = sending_rate
 
         # Initalizes server state
-        self.server_state = server_states.in_game
-        self.server_map = input("what map do you want to play? ")
-        
+        self.server_state = server_states.in_lobby
+        self.server_map = None
+
+        self.get_maps = lambda : ["'"+map_file+"'" for map_file in os.listdir(".") if map_file.endswith(".gltf")]
+        self.get_voted_maps = lambda : {map : 0 for map in self.get_maps()}
+
+        self.maps = self.get_maps()
+        self.map_votes = self.get_voted_maps()
+
         # Sets the max players
-        self.max_players = 8
+        self.max_players = 1
         self.socket.listen(self.max_players)
 
         # Initalizes the player list
@@ -29,11 +35,34 @@ class Server:
         self.player_sockets : list[socket.socket] = []
         self.used_sockets : list[bool] = []
 
+        self.get_socket_list = lambda : [
+            self.player_sockets[p_socket] for p_socket in range(len(self.player_sockets)) 
+            if self.player_sockets[p_socket] != (False, p_socket)
+        ]
+
         # Initalizes the sending list
         self.sending = []
 
+        self.voted_players = 0
+
         # Starts the sending thread
         #_thread.start_new_thread(self.start_sending, ())
+
+    def lobby_handler(self):
+        if self.voted_players == len(self.get_socket_list()) and len(self.get_socket_list())>=1:
+            self.server_map = self.get_most_voted_map().replace("'","")
+            self.server_state = server_states.in_game
+
+    def get_most_voted_map(self):
+        last_greatest_vote = 0
+        winning_maps = [""]
+
+        for v_map in self.map_votes.keys():
+            if self.map_votes[v_map] > last_greatest_vote:
+                last_greatest_vote = self.map_votes[v_map]
+                winning_maps[0] = v_map
+
+        return winning_maps[random.randint(0,len(winning_maps)-1)]
 
     def update(self):
         client_socket, client_addr = self.socket.accept()
@@ -63,12 +92,14 @@ class Server:
                 self.used_sockets.append(False)
                 break
         else:
-            quit("Denied connection, the server is full")
+            client_socket.close()
+            print("Denied connection, the server is full")
+            quit()
         
         # Send the playerID back to the client
-        packet:str = "max_players"+"|"
+        packet:str = "max_players|"
         packet += str(self.max_players)+","
-        packet += "my_id"+"|"
+        packet += "my_id|"
         packet += str(player_idx)+","
         client_socket.send(packet.encode())
         
@@ -82,7 +113,7 @@ class Server:
 
         while True:
             try:
-                # Let's not leak memory slowly, shall we?
+                # Let's not leak memory, shall we?
                 sending.clear()
 
                 # Recive the packet sent by the player
@@ -107,12 +138,30 @@ class Server:
                             packet += str(pos.y) + "|"
                             packet += str(pos.z) + ","
                             sending.append(packet.encode())
+
+                    elif packet[0] == "getServerState":
+                        client_socket.send(str(self.server_state).encode())
+
+                    elif packet[0] == "getServerMaps":
+                        client_socket.send(",".join(self.maps).encode())
+
+                    elif packet[0] == "voted":
+                        print(packet[1])
+                        print(self.map_votes)
+                        if "'"+packet[1]+"'" in self.map_votes:
+                            self.map_votes["'"+packet[1]+"'"] += 1
+                            self.voted_players += 1
+                            print(self.voted_players, len(self.get_socket_list()))
+
+                        self.lobby_handler()
+                        print("test")
                     
                     elif packet[0] == "mapRequest":
                         self.used_sockets[player_idx] = True
                         print("requested map!")
+                        print(self.server_map)
                         if self.server_state == server_states.in_game:
-                            server_map, lights = modelLoader.load_gltf(self.server_map)
+                            server_map, lights = modelLoader.load_gltf(self.server_map.removesuffix(".gltf"))
                             print(server_map)
                             packet = "map|"
                             packet += str(server_map)+"\\"
@@ -138,7 +187,7 @@ class Server:
                 self.player_sockets[player_idx] = (False, player_idx)
                 self.players[player_idx] = (False, player_idx)
 
-                print(e)
+                raise e
                 
                 # Tell all players that this player left the server
                 packet = "playerDisconnect|"
@@ -185,4 +234,4 @@ class Server:
                 for packet in data:
                     if client != client_socket and client:
                         if isinstance(client, socket.socket):
-                            client.send(packet) 
+                            client.send(packet)

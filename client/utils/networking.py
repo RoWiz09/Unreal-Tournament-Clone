@@ -1,12 +1,25 @@
-import socket, _thread, time, ast, numpy as np, glm
+import socket, _thread, time, ast, numpy as np, glm, os.path
+from json import load, dump
 from utils import mesh
-from json import load
+
+class server_states:
+    in_lobby = 0
+    in_game = 1
 
 class NetworkClient:
     def __init__(self, window_class, player_renderer_class, packet_rate : float = 0.01):
         self.socket = socket.socket()
-        with open("NetworkSettings.json") as networkSettings:
-            self.networkSettings = load(networkSettings)
+        if os.path.isfile("NetworkSettings.json"):
+            with open("NetworkSettings.json") as networkSettings:
+                self.networkSettings = load(networkSettings)
+        else:
+            with open("NetworkSettings.json", "w") as networkSettings:
+                self.networkSettings = {
+                    "ip":"127.0.0.1",
+                    "port":42069
+                }
+                dump(self.networkSettings, networkSettings)
+
         self.socket.connect((self.networkSettings["ip"], self.networkSettings["port"]))
         
         self.renderer_class = player_renderer_class
@@ -34,6 +47,10 @@ class NetworkClient:
 
     def add_to_sending(self, sendable_data : bytes):
         self.sending.append(sendable_data)
+
+    def vote_on_map(self, map:str):
+        packet = "voted|%s"%map
+        self.socket.send(packet.encode())
 
     def request_map(self):
         self.send("mapRequest,".encode())
@@ -63,6 +80,18 @@ class NetworkClient:
                     )            
 
         return self.map, self.lights_in_map
+    
+    def get_server_state(self):
+        self.socket.send("getServerState".encode())
+
+        msg = int(self.socket.recv(1024).decode())
+        return msg
+    
+    def get_maps(self):
+        self.socket.send("getServerMaps".encode())
+
+        msg = self.socket.recv(1024).decode()
+        return msg
 
     def send(self, packet : bytes):
         self.socket.send(packet)

@@ -4,10 +4,10 @@ from utils import renderer
 from utils import shader
 from utils import camera
 import OpenGL.GL as gl
+import _thread, ast
 import glfw, time
 import PIL.Image
 import glm, PIL
-import _thread
 
 class window:
     def __init__(self, res : tuple):
@@ -32,8 +32,22 @@ class window:
         self.network_player_renderers : list[renderer.player_renderer] = []
 
         self.network = networking.NetworkClient(self, renderer.player_renderer)
+        
+        self.voted = False
+        while True:
+            if self.network.get_server_state() == networking.server_states.in_game:
+                map_verts, self.light_data = self.network.request_map()
+                break
 
-        map_verts, self.light_data = self.network.request_map()
+            else:
+                if not self.voted:
+                    maps = self.network.get_maps()
+                    voted_map = input("what is your map vote? Your choices are: %s "%maps.removesuffix(",").replace(".gltf","").replace(",",", ").replace("'",""))
+                    if voted_map+".gltf" in ast.literal_eval("["+maps+"]"):
+                        print("Voted for %s"%voted_map)
+                        self.voted = True
+                        self.network.vote_on_map(voted_map+".gltf")
+
 
         _thread.start_new_thread(self.network.start_reciving, (renderer.player_renderer,))
         
