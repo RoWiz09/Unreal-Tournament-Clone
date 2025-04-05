@@ -9,7 +9,7 @@ uniform sampler2D texture1; // Color texture
 uniform vec3 viewPos;       // Camera position
 
 // Maximum number of lights
-const int MAX_LIGHTS = 8;
+const int MAX_LIGHTS = 32;
 
 struct PointLight {
     vec3 position;

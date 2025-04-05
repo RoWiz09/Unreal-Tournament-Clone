@@ -3,11 +3,16 @@ from utils import material
 from utils import renderer
 from utils import shader
 from utils import camera
+from utils import font
+from utils import ui
+
 import OpenGL.GL as gl
 import _thread, ast
+import numpy as np
 import glfw, time
 import PIL.Image
 import glm, PIL
+import random
 
 class window:
     def __init__(self, res : tuple):
@@ -23,7 +28,7 @@ class window:
         gl.glClearColor(100/255, 100/255, 255/255, 255/255)
 
         gl.glEnable(gl.GL_DEPTH_TEST)
-        gl.glEnable(gl.GL_CULL_FACE)
+        #gl.glEnable(gl.GL_CULL_FACE)
 
         self.window = window
 
@@ -32,8 +37,18 @@ class window:
         self.network_player_renderers : list[renderer.player_renderer] = []
 
         self.network = networking.NetworkClient(self, renderer.player_renderer)
+
+        self.ui_shader = shader.ShaderProgram("shaders\\ui_vert.glsl", "shaders\\ui_frag.glsl")
+        self.font = font.Font("fontatlas.png", self.ui_shader)
+        self.material = material.Material(glm.vec4(1,1,1,1), PIL.Image.open(".\\container.png"), self.ui_shader)
         
         self.voted = False
+        self.element = ui.text(ui.ui_transform(
+            glm.vec2(0,0),
+            glm.vec2(0,0),
+            glm.vec2(1,1)
+        ), "test:trademark:", self.font)
+
         while True:
             if self.network.get_server_state() == networking.server_states.in_game:
                 map_verts, self.light_data = self.network.request_map()
@@ -54,11 +69,20 @@ class window:
         self.map = renderer.WorldRenderer(map_verts)
         self.shader = shader.ShaderProgram("shaders\\vertex.glsl", "shaders\\fragment.glsl")
         self.camera = camera.camera()
+
+        print(len(self.network.blue_spawnpoints))
+        print(len(self.network.red_spawnpoints))
+
+        if self.network.team == "Blue" and len(self.network.blue_spawnpoints) > 0:
+            self.network.blue_spawnpoints[random.randint(0, len(self.network.blue_spawnpoints)-1)].spawn(self.camera)
+
+        elif len(self.network.red_spawnpoints) > 0:
+            self.network.red_spawnpoints[random.randint(0, len(self.network.red_spawnpoints)-1)].spawn(self.camera)
+
         self.player_object = renderer.player_renderer(self.network, True)
         self.material = material.Material(glm.vec4(1,1,1,1), PIL.Image.open(".\\container.png"), self.shader)
 
         self.last_time = time.time()
-
 
         window_size = glfw.get_window_size(self.window)
         glfw.set_cursor_pos(self.window, window_size[0]/2, window_size[1]/2)
@@ -109,6 +133,8 @@ class window:
             self.network_player_renderers[player[0]].pos.z = 0.0
 
         self.to_create.clear()
+
+        self.element.render()
 
         glfw.swap_buffers(self.window)
 

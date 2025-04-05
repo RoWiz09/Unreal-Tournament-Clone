@@ -6,6 +6,14 @@ class server_states:
     in_lobby = 0
     in_game = 1
 
+class spawnpoint:
+    def __init__(self, pos:glm.vec3, team:bool):
+        self.pos = pos
+        self.team = team
+
+    def spawn(self, my_player):
+        my_player.position = self.pos
+
 class NetworkClient:
     def __init__(self, window_class, player_renderer_class, packet_rate : float = 0.01):
         self.socket = socket.socket()
@@ -31,6 +39,9 @@ class NetworkClient:
         self.map = None
         self.lights_in_map = []
 
+        self.red_spawnpoints = []
+        self.blue_spawnpoints = []
+
         msg = self.socket.recv(1024).decode()
         print(msg)
 
@@ -38,8 +49,13 @@ class NetworkClient:
 
         packet = self.socket.recv(1024).decode()
         packet = packet.split(",")
+
         max_player_count = int(packet[0].split("|")[1])
         self.player_idx = int(packet[1].split("|")[1])
+        self.team = packet[2].split("|")[1]
+
+        print(self.team)
+
         for i in range(max_player_count):
             self.window.network_player_renderers.append(i)
 
@@ -67,16 +83,38 @@ class NetworkClient:
                     faces = np.array(faces, dtype=np.float32)
                     self.map = faces
                 elif packet[0] == "light":
+                    print(packet[3])
                     self.lights_in_map.append(
                         {
-                            "position": glm.vec3(*ast.literal_eval(packet[3])),
+                            "position": glm.vec3(*ast.literal_eval(packet[4])),
                             "color": glm.vec3(*ast.literal_eval(packet[2])),
-                            "intensity": 30.0,
-                            "constant": 10.0,
+                            "intensity": 0.00004*float(packet[3]),
+                            "constant": 0.00002*float(packet[3]),
                             "linear": 0.09,
                             "quadratic": 0.032
                         }
-                    )            
+                    ) 
+
+                elif packet[0] == "spawnpoint":
+                    if ast.literal_eval(packet[2]):
+                        self.blue_spawnpoints.append(
+                            spawnpoint(
+                                glm.vec3(
+                                    *ast.literal_eval(packet[1])
+                                ),
+                                True
+                            )
+                        )
+
+                    elif not ast.literal_eval(packet[2]):
+                        self.red_spawnpoints.append(
+                            spawnpoint(
+                                glm.vec3(
+                                    *ast.literal_eval(packet[1])
+                                ),
+                                False
+                            )
+                        )
 
         return self.map, self.lights_in_map
     

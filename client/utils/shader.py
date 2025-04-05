@@ -55,7 +55,7 @@ class ShaderProgram():
 
     def set_lights(self, light_data):
         # Number of active lights
-        num_lights = 8
+        num_lights = len(light_data)
         glUniform1i(glGetUniformLocation(self.program, "numLights"), num_lights)
 
         # Set light data in the shader

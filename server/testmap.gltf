@@ -1,6 +1,6 @@
 {
 	"asset":{
-		"generator":"Khronos glTF Blender I/O v4.0.44",
+		"generator":"Khronos glTF Blender I/O v4.1.63",
 		"version":"2.0"
 	},
 	"extensionsUsed":[
@@ -15,12 +15,62 @@
 				{
 					"color":[
 						1,
+						1,
+						1
+					],
+					"intensity":163054.2391976468,
+					"type":"point",
+					"name":"Point.001"
+				},
+				{
+					"color":[
+						1,
 						0,
 						0
 					],
 					"intensity":54351.41306588226,
 					"type":"point",
-					"name":"Light"
+					"name":"Point.002"
+				},
+				{
+					"color":[
+						0,
+						0,
+						1
+					],
+					"intensity":54351.41306588226,
+					"type":"point",
+					"name":"Point.003"
+				},
+				{
+					"color":[
+						0,
+						0,
+						1
+					],
+					"intensity":54351.41306588226,
+					"type":"point",
+					"name":"Point.004"
+				},
+				{
+					"color":[
+						0,
+						0,
+						1
+					],
+					"intensity":54351.41306588226,
+					"type":"point",
+					"name":"Point.005"
+				},
+				{
+					"color":[
+						0,
+						0,
+						1
+					],
+					"intensity":54351.41306588226,
+					"type":"point",
+					"name":"Point.006"
 				},
 				{
 					"color":[
@@ -30,7 +80,47 @@
 					],
 					"intensity":54351.41306588226,
 					"type":"point",
-					"name":"Light.001"
+					"name":"Point.007"
+				},
+				{
+					"color":[
+						1,
+						0,
+						0
+					],
+					"intensity":54351.41306588226,
+					"type":"point",
+					"name":"Point.008"
+				},
+				{
+					"color":[
+						1,
+						0,
+						0
+					],
+					"intensity":54351.41306588226,
+					"type":"point",
+					"name":"Point.009"
+				},
+				{
+					"color":[
+						0,
+						0,
+						1
+					],
+					"intensity":54351.41306588226,
+					"type":"point",
+					"name":"Point.010"
+				},
+				{
+					"color":[
+						0,
+						0,
+						1
+					],
+					"intensity":54351.41306588226,
+					"type":"point",
+					"name":"Point.011"
 				},
 				{
 					"color":[
@@ -38,9 +128,9 @@
 						1,
 						1
 					],
-					"intensity":54351.41306588226,
+					"intensity":163054.2391976468,
 					"type":"point",
-					"name":"Light.002"
+					"name":"Point.012"
 				},
 				{
 					"color":[
@@ -48,49 +138,9 @@
 						1,
 						1
 					],
-					"intensity":54351.41306588226,
+					"intensity":163054.2391976468,
 					"type":"point",
-					"name":"Light.003"
-				},
-				{
-					"color":[
-						1,
-						1,
-						1
-					],
-					"intensity":54351.41306588226,
-					"type":"point",
-					"name":"Light.004"
-				},
-				{
-					"color":[
-						1,
-						1,
-						1
-					],
-					"intensity":54351.41306588226,
-					"type":"point",
-					"name":"Light.005"
-				},
-				{
-					"color":[
-						1,
-						1,
-						1
-					],
-					"intensity":54351.41306588226,
-					"type":"point",
-					"name":"Light.006"
-				},
-				{
-					"color":[
-						1,
-						1,
-						1
-					],
-					"intensity":54351.41306588226,
-					"type":"point",
-					"name":"Light.007"
+					"name":"Point.013"
 				}
 			]
 		}
@@ -108,14 +158,22 @@
 				5,
 				6,
 				7,
-				8
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16
 			]
 		}
 	],
 	"nodes":[
 		{
 			"mesh":0,
-			"name":"Cube"
+			"name":"Map"
 		},
 		{
 			"extensions":{
@@ -123,17 +181,17 @@
 					"light":0
 				}
 			},
-			"name":"Light",
+			"name":"Point",
 			"rotation":[
-				-0.28416627645492554,
-				0.7269423007965088,
-				0.34203392267227173,
-				0.5232754945755005
+				-0.7071068286895752,
+				0,
+				0,
+				0.7071068286895752
 			],
 			"translation":[
-				-19.923755645751953,
-				5.903861999511719,
-				-1.0054539442062378
+				0,
+				20,
+				15
 			]
 		},
 		{
@@ -142,17 +200,17 @@
 					"light":1
 				}
 			},
-			"name":"Light.001",
+			"name":"Point.001",
 			"rotation":[
-				-0.28416627645492554,
-				0.7269423007965088,
-				0.34203392267227173,
-				0.5232754945755005
+				-0.7071068286895752,
+				0,
+				0,
+				0.7071068286895752
 			],
 			"translation":[
-				25.076244354248047,
-				5.903861999511719,
-				-1.0054539442062378
+				0,
+				5,
+				-45
 			]
 		},
 		{
@@ -161,17 +219,17 @@
 					"light":2
 				}
 			},
-			"name":"Light.002",
+			"name":"Point.002",
 			"rotation":[
-				-0.28416627645492554,
-				0.7269423007965088,
-				0.34203392267227173,
-				0.5232754945755005
+				-0.7071068286895752,
+				0,
+				0,
+				0.7071068286895752
 			],
 			"translation":[
-				2.076244354248047,
-				15.903861999511719,
-				26.00550079345703
+				-20,
+				25,
+				45
 			]
 		},
 		{
@@ -180,17 +238,17 @@
 					"light":3
 				}
 			},
-			"name":"Light.003",
+			"name":"Point.003",
 			"rotation":[
-				-0.28416627645492554,
-				0.7269423007965088,
-				0.34203392267227173,
-				0.5232754945755005
+				-0.7071068286895752,
+				0,
+				0,
+				0.7071068286895752
 			],
 			"translation":[
-				2.076244354248047,
-				15.903861999511719,
-				-26.00545310974121
+				0,
+				5,
+				45
 			]
 		},
 		{
@@ -199,17 +257,17 @@
 					"light":4
 				}
 			},
-			"name":"Light.004",
+			"name":"Point.004",
 			"rotation":[
-				-0.28416627645492554,
-				0.7269423007965088,
-				0.34203392267227173,
-				0.5232754945755005
+				-0.7071068286895752,
+				0,
+				0,
+				0.7071068286895752
 			],
 			"translation":[
-				-19.923755645751953,
-				22.90386199951172,
-				15.005500793457031
+				0,
+				30,
+				45
 			]
 		},
 		{
@@ -218,17 +276,17 @@
 					"light":5
 				}
 			},
-			"name":"Light.005",
+			"name":"Point.005",
 			"rotation":[
-				-0.28416627645492554,
-				0.7269423007965088,
-				0.34203392267227173,
-				0.5232754945755005
+				-0.7071068286895752,
+				0,
+				0,
+				0.7071068286895752
 			],
 			"translation":[
-				-19.923755645751953,
-				22.90386199951172,
-				-15.005499839782715
+				20,
+				25,
+				45
 			]
 		},
 		{
@@ -237,17 +295,17 @@
 					"light":6
 				}
 			},
-			"name":"Light.006",
+			"name":"Point.006",
 			"rotation":[
-				-0.28416627645492554,
-				0.7269423007965088,
-				0.34203392267227173,
-				0.5232754945755005
+				-0.7071068286895752,
+				0,
+				0,
+				0.7071068286895752
 			],
 			"translation":[
-				8.076244354248047,
-				30.90386199951172,
-				-15.005499839782715
+				20,
+				25,
+				-45
 			]
 		},
 		{
@@ -256,24 +314,152 @@
 					"light":7
 				}
 			},
-			"name":"Light.007",
+			"name":"Point.007",
 			"rotation":[
-				-0.28416627645492554,
-				0.7269423007965088,
-				0.34203392267227173,
-				0.5232754945755005
+				-0.7071068286895752,
+				0,
+				0,
+				0.7071068286895752
 			],
 			"translation":[
-				8.076244354248047,
-				30.90386199951172,
-				15.005499839782715
+				0,
+				30,
+				-45
+			]
+		},
+		{
+			"extensions":{
+				"KHR_lights_punctual":{
+					"light":8
+				}
+			},
+			"name":"Point.008",
+			"rotation":[
+				-0.7071068286895752,
+				0,
+				0,
+				0.7071068286895752
+			],
+			"translation":[
+				-20,
+				25,
+				-45
+			]
+		},
+		{
+			"extensions":{
+				"KHR_lights_punctual":{
+					"light":9
+				}
+			},
+			"name":"Point.009",
+			"rotation":[
+				-0.7071068286895752,
+				0,
+				0,
+				0.7071068286895752
+			],
+			"translation":[
+				20,
+				25,
+				45
+			]
+		},
+		{
+			"extensions":{
+				"KHR_lights_punctual":{
+					"light":10
+				}
+			},
+			"name":"Point.010",
+			"rotation":[
+				-0.7071068286895752,
+				0,
+				0,
+				0.7071068286895752
+			],
+			"translation":[
+				0,
+				30,
+				45
+			]
+		},
+		{
+			"extensions":{
+				"KHR_lights_punctual":{
+					"light":11
+				}
+			},
+			"name":"Point.011",
+			"rotation":[
+				-0.7071068286895752,
+				0,
+				0,
+				0.7071068286895752
+			],
+			"translation":[
+				0,
+				10,
+				0
+			]
+		},
+		{
+			"extensions":{
+				"KHR_lights_punctual":{
+					"light":12
+				}
+			},
+			"name":"Point.012",
+			"rotation":[
+				-0.7071068286895752,
+				0,
+				0,
+				0.7071068286895752
+			],
+			"translation":[
+				0,
+				20,
+				-15
+			]
+		},
+		{
+			"extras":{
+				"Team":"Red"
+			},
+			"name":"PlayerSpawn",
+			"translation":[
+				0,
+				5,
+				-24
+			]
+		},
+		{
+			"extras":{
+				"Weapon":"debug_gun"
+			},
+			"name":"WeaponSpawn",
+			"translation":[
+				0,
+				5,
+				0
+			]
+		},
+		{
+			"extras":{
+				"Team":"Blue"
+			},
+			"name":"PlayerSpawn.001",
+			"translation":[
+				0,
+				5,
+				24
 			]
 		}
 	],
 	"materials":[
 		{
 			"doubleSided":true,
-			"name":"Material",
+			"name":"Material.001",
 			"pbrMetallicRoughness":{
 				"baseColorFactor":[
 					0.800000011920929,
@@ -288,7 +474,7 @@
 	],
 	"meshes":[
 		{
-			"name":"Cube",
+			"name":"Map",
 			"primitives":[
 				{
 					"attributes":{
@@ -306,67 +492,67 @@
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":557,
+			"count":1410,
 			"max":[
-				34.03999710083008,
-				29.400001525878906,
-				31.19999885559082
+				20,
+				25,
+				59.279998779296875
 			],
 			"min":[
-				-39.97246551513672,
-				-0.3999999761581421,
-				-31.19999885559082
+				-20,
+				-1,
+				-59.279998779296875
 			],
 			"type":"VEC3"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":557,
+			"count":1410,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":557,
+			"count":1410,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":3,
 			"componentType":5123,
-			"count":1536,
+			"count":5076,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":6684,
+			"byteLength":16920,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":6684,
-			"byteOffset":6684,
+			"byteLength":16920,
+			"byteOffset":16920,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":4456,
-			"byteOffset":13368,
+			"byteLength":11280,
+			"byteOffset":33840,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":3072,
-			"byteOffset":17824,
+			"byteLength":10152,
+			"byteOffset":45120,
 			"target":34963
 		}
 	],
 	"buffers":[
 		{
-			"byteLength":20896,
+			"byteLength":55272,
 			"uri":"testmap.bin"
 		}
 	]

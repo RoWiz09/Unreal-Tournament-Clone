@@ -27,7 +27,14 @@ class Server:
         self.map_votes = self.get_voted_maps()
 
         # Sets the max players
-        self.max_players = 8
+        self.max_players = 9
+        if self.max_players % 2 != 0:
+            print("Invalid max player count: %i. The player count must be even." % self.max_players)
+            self.max_players -= 1
+
+        self.red_team = []
+        self.blue_team = []
+
         self.socket.listen(self.max_players)
 
         # Initalizes the player list
@@ -67,9 +74,9 @@ class Server:
     def update(self):
         client_socket, client_addr = self.socket.accept()
 
-        _thread.start_new_thread(self.client_thread, (client_socket, client_addr))
+        _thread.start_new_thread(self.client_thread, (client_socket,))
 
-    def client_thread(self, client_socket : socket.socket, client_addr):
+    def client_thread(self, client_socket : socket.socket):
         client_socket.send("welcome to the server!".encode())
         time.sleep(0.01)
 
@@ -95,12 +102,30 @@ class Server:
             client_socket.close()
             print("Denied connection, the server is full")
             quit()
+
+        if len(self.red_team) == self.max_players/2:
+            self.blue_team.append(player_idx)
+            team = "Red"
+
+        elif len(self.blue_team) == self.max_players/2:
+            self.red_team.append(player_idx)
+            team = "Blue"
+
+        else:
+            if random.randint(0,1) == 1:
+                self.blue_team.append(player_idx)
+                team = "Blue"
+            else:
+                self.red_team.append(player_idx)
+                team = "Red"
         
         # Send the playerID back to the client
         packet:str = "max_players|"
         packet += str(self.max_players)+","
         packet += "my_id|"
         packet += str(player_idx)+","
+        packet += "my_team|"
+        packet += str(team)+","
         client_socket.send(packet.encode())
         
         # Send the new client's connection packet to all other clients
@@ -151,24 +176,23 @@ class Server:
                         self.used_sockets[player_idx] = False
 
                     elif packet[0] == "voted":
-                        print(packet[1])
-                        print(self.map_votes)
                         if "'"+packet[1]+"'" in self.map_votes:
                             self.map_votes["'"+packet[1]+"'"] += 1
                             self.voted_players += 1
-                            print(self.voted_players, len(self.get_socket_list()))
 
                         self.lobby_handler()
                     
                     elif packet[0] == "mapRequest":
                         self.used_sockets[player_idx] = True
                         if self.server_state == server_states.in_game:
-                            server_map, lights = modelLoader.load_gltf(self.server_map.removesuffix(".gltf"))
-                            print(server_map)
+                            server_map, lights, spawnpoints = modelLoader.load_gltf(self.server_map.removesuffix(".gltf"))
                             packet = "map|"
                             packet += str(server_map)+"\\"
                             for light in lights:
                                 packet += light.to_packet()
+
+                            for spawnpoint in spawnpoints:
+                                packet += spawnpoint.to_packet()
 
                             map_size_packet = "mapSize|"
                             map_size_packet += str(len(packet.encode()))
@@ -177,7 +201,6 @@ class Server:
                             time.sleep(0.25)
 
                             client_socket.send(packet.encode())
-                            print("sent map")
 
                         self.used_sockets[player_idx] = False
 
@@ -188,7 +211,9 @@ class Server:
                 print("client disconnected!")
                 self.player_sockets[player_idx] = (False, player_idx)
                 self.players[player_idx] = (False, player_idx)
-                
+
+                print(e)
+
                 # Tell all players that this player left the server
                 packet = "playerDisconnect|"
                 packet += str(player_idx)+","
