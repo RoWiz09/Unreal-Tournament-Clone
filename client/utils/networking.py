@@ -43,7 +43,6 @@ class NetworkClient:
         self.blue_spawnpoints = []
 
         msg = self.socket.recv(1024).decode()
-        print(msg)
 
         self.sending = []
 
@@ -53,8 +52,6 @@ class NetworkClient:
         max_player_count = int(packet[0].split("|")[1])
         self.player_idx = int(packet[1].split("|")[1])
         self.team = packet[2].split("|")[1]
-
-        print(self.team)
 
         for i in range(max_player_count):
             self.window.network_player_renderers.append(i)
@@ -83,7 +80,6 @@ class NetworkClient:
                     faces = np.array(faces, dtype=np.float32)
                     self.map = faces
                 elif packet[0] == "light":
-                    print(packet[3])
                     self.lights_in_map.append(
                         {
                             "position": glm.vec3(*ast.literal_eval(packet[4])),
@@ -135,6 +131,9 @@ class NetworkClient:
         packet = self.recv_spec_packet(packet_type)
         return packet
 
+    def send_chat_msg(self, msg:str):
+        packet = "chatmsg::"+msg+","
+        self.socket.send(packet.encode())
     
     def get_maps(self):
         self.socket.send("getServerMaps".encode())
@@ -173,11 +172,15 @@ class NetworkClient:
                             packet[1] = player_id
                             self.window.to_create.append(packet[1:])
 
-                if packet[0] == "connection":
+                elif packet[0] == "connection":
                     packet[1] = int(packet[1])
                     self.window.to_create.append(packet[1:])
 
-                if packet[0] == "playerDisconnect":
+                elif packet[0] == "playerDisconnect":
                     player_id = int(packet[1])
                     self.window.network_player_renderers[player_id] = player_id
                     print("Player %i lost connection!"%player_id)
+                
+                elif "chatmsg" in packet[0]:
+                    msg = packet[0].split("::")
+                    self.window.create_chat_msg(msg[1])

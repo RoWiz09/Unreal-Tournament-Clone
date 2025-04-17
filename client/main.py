@@ -1,6 +1,6 @@
 from utils import window
 
-game_window = window.window((600, 500))
+game_window = window.window()
 
 while not game_window.get_window_state():
     game_window.update()

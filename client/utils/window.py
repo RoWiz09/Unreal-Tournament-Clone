@@ -1,8 +1,12 @@
+from utils import menuhandler as menus
+from utils import global_vars
 from utils import networking
+from utils import input_lib
 from utils import material
 from utils import renderer
 from utils import shader
 from utils import camera
+from utils import chat
 from utils import font
 from utils import ui
 
@@ -15,24 +19,30 @@ import glm, PIL
 import random
 
 class window:
-    def __init__(self, res : tuple):
+    def __init__(self, res : tuple = None):
         glfw.init()
         
         glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
         glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
         glfw.window_hint(glfw.OPENGL_PROFILE, glfw.OPENGL_CORE_PROFILE)
-
-        window = glfw.create_window(*res, "Real Tournament - Ghost game lore may be included!", None, None)
+        if res:
+            window = glfw.create_window(*res, "Real Tournament - Ghost game lore may be included!", None, None)
+        else:
+            window = glfw.create_window(*glfw.get_monitor_workarea(glfw.get_primary_monitor())[2:4], "Real Tournament - Ghost game lore may be included!", None, None)
+        glfw.set_window_pos(window, 0, 0)
         glfw.make_context_current(window)
 
         gl.glClearColor(100/255, 100/255, 255/255, 255/255)
 
         gl.glEnable(gl.GL_DEPTH_TEST)
-        #gl.glEnable(gl.GL_CULL_FACE)
+        gl.glEnable(gl.GL_CULL_FACE)
+        gl.glEnable(gl.GL_BLEND)
+        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
 
         self.window = window
 
         self.to_create = []
+        self.chat_to_create = []
 
         self.network_player_renderers : list[renderer.player_renderer] = []
 
@@ -40,14 +50,34 @@ class window:
 
         self.ui_shader = shader.ShaderProgram("shaders\\ui_vert.glsl", "shaders\\ui_frag.glsl")
         self.font = font.Font("fontatlas.png", self.ui_shader)
-        self.material = material.Material(glm.vec4(1,1,1,1), PIL.Image.open(".\\container.png"), self.ui_shader)
         
         self.voted = False
-        self.element = ui.text(ui.ui_transform(
-            glm.vec2(0,0),
-            glm.vec2(0,0),
-            glm.vec2(1,1)
-        ), "test:trademark:", self.font)
+        self.window_size = glfw.get_window_size(window)
+        global_vars.window_size = self.window_size
+
+        self.menus = {
+            "chat":menus.menu([
+                ui.panel(
+                    np.array([
+                            self.window_size[0]/3, self.window_size[1]/2, 1.0, 1.0,  # top-right
+                            self.window_size[0]/3, 0, 1.0, 0.0,  # bottom-right
+                            0, 0, 0.0, 0.0,  # bottom-left
+
+                            0, self.window_size[1]/2, 0.0, 1.0,   # top-left
+                            self.window_size[0]/3, self.window_size[1]/2, 1.0, 1.0,  # top-right
+                            0, 0, 0.0, 0.0,  # bottom-left
+                        ], dtype=np.float32),
+                    material.Material(glm.vec4(1,1,1,1), PIL.Image.open(".\\container.png"), self.ui_shader), 
+                    ui.ui_transform(
+                        glm.vec2(0, 0),
+                        glm.vec2(0, 0),
+                        glm.vec2(1, 1),
+                        ui.anchors.bottom_left
+                ))]
+            )
+        }
+
+        self.menuhandler = menus.menuHandler(self.menus)
 
         while True:
             if self.network.get_server_state() == networking.server_states.in_game:
@@ -70,13 +100,10 @@ class window:
         self.shader = shader.ShaderProgram("shaders\\vertex.glsl", "shaders\\fragment.glsl")
         self.camera = camera.camera()
 
-        print(len(self.network.blue_spawnpoints))
-        print(len(self.network.red_spawnpoints))
-
         if self.network.team == "Blue" and len(self.network.blue_spawnpoints) > 0:
             self.network.blue_spawnpoints[random.randint(0, len(self.network.blue_spawnpoints)-1)].spawn(self.camera)
 
-        elif len(self.network.red_spawnpoints) > 0:
+        elif not self.network.team == "Blue" and len(self.network.red_spawnpoints) > 0:
             self.network.red_spawnpoints[random.randint(0, len(self.network.red_spawnpoints)-1)].spawn(self.camera)
 
         self.player_object = renderer.player_renderer(self.network, True)
@@ -107,6 +134,10 @@ class window:
         self.shader.SetMat4x4("view", view)
         self.shader.SetMat4x4("projection", projection)
 
+        projection = glm.ortho(0, window_size[0], window_size[1], 0, -1.0, 1.0)
+        self.ui_shader.Use()
+        self.ui_shader.SetMat4x4("projection", projection)
+
         gl.glViewport(0, 0, *glfw.get_window_size(self.window))
 
         gl.glClear(gl.GL_DEPTH_BUFFER_BIT | gl.GL_COLOR_BUFFER_BIT)
@@ -134,9 +165,42 @@ class window:
 
         self.to_create.clear()
 
-        self.element.render()
+        # Disable GL_DEPTH_TEST for UI transparency
+        gl.glDisable(gl.GL_DEPTH_TEST)
 
+        # Render all required UI elements
+        input_lib.handle_inputs(self.window)
+        chat.handle_input(self)
+        self.menuhandler.render_menu_name("chat")
+
+        # Update the window and enable GL_DEPTH_TEST for 3d rendering
         glfw.swap_buffers(self.window)
+        gl.glEnable(gl.GL_DEPTH_TEST)
+
+        # Update the chat menu
+        for msg in self.chat_to_create:
+            for message in self.menuhandler.menus["chat"].elements:
+                if isinstance(message, ui.text):
+                    message.transform.pos.y += self.font.get_height(msg, 14)
+            self.menuhandler.menus["chat"].elements.append(
+            ui.text(
+                ui.textlike(
+                    msg, 
+                    14
+                ), 
+                self.font, 
+                ui.ui_transform(
+                    glm.vec2(0,0), 
+                    glm.vec2(0,0), 
+                    glm.vec2(1,1), 
+                    ui.anchors.bottom_left
+                )
+            )
+        )
+        self.chat_to_create.clear()
 
     def get_window_state(self):
         return glfw.window_should_close(self.window)
+    
+    def create_chat_msg(self, msg_contents:str):
+        self.chat_to_create.append(msg_contents)

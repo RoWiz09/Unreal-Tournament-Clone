@@ -182,6 +182,10 @@ class Server:
 
                         self.lobby_handler()
                     
+                    elif "chatmsg" in packet[0]:
+                        msg = packet[0].split("::")
+                        self.send_to_all(client_socket, str("chatmsg::"+msg[1]).encode())
+                    
                     elif packet[0] == "mapRequest":
                         self.used_sockets[player_idx] = True
                         if self.server_state == server_states.in_game:
@@ -211,8 +215,8 @@ class Server:
                 print("client disconnected!")
                 self.player_sockets[player_idx] = (False, player_idx)
                 self.players[player_idx] = (False, player_idx)
-
-                print(e)
+                
+                #print(e)
 
                 # Tell all players that this player left the server
                 packet = "playerDisconnect|"
