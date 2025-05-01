@@ -43,7 +43,7 @@ def load_gltf(filename:str):
     has_blue_spawnpoint = False
     has_red_spawnpoint = False
 
-    with open(filename+".gltf", "r") as file:
+    with open("maps\\"+filename+".gltf", "r") as file:
         gltf = json.load(file)
 
     vertices = []
@@ -55,7 +55,7 @@ def load_gltf(filename:str):
 
     # Read binary buffer
     buffer_uri = gltf["buffers"][0]["uri"]
-    with open(buffer_uri, "rb") as bin_file:
+    with open("maps\\"+buffer_uri, "rb") as bin_file:
         buffer_data = bin_file.read()
 
     def extract_data(accessor_idx):

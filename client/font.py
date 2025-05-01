@@ -1,6 +1,7 @@
 import glm, PIL.Image as image
-from utils.material import Material
-from json import load
+from client.material import Material
+from json import loads
+import ast
 import numpy as np
 import time
 
@@ -20,11 +21,10 @@ def get_verts_custom_uv(uv, letter_offset_x:int, letter_offset_y:int, letter_siz
     return out
 
 class Font:
-    def __init__(self, font_name:str, shader):
-        self.font_mat = Material(glm.vec4(0,0,0,1),image.open(font_name), shader)
+    def __init__(self, font_json_data:str, font_img_data:str, shader):
+        self.font_mat = Material(glm.vec4(1,1,1,1),font_img_data, shader)
 
-        with open(font_name.removesuffix(".png")+".json") as font_json:
-            self.font_data = load(font_json)
+        self.font_data:dict = ast.literal_eval(font_json_data.replace("'''",""))
 
     def get_text_verts(self, text:str, font_size:int=28, max_width:int=None):
         data = []

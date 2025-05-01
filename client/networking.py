@@ -1,6 +1,6 @@
 import socket, _thread, time, ast, numpy as np, glm, os.path
 from json import load, dump
-from utils import mesh
+from client import mesh
 
 class server_states:
     in_lobby = 0
@@ -15,20 +15,9 @@ class spawnpoint:
         my_player.position = self.pos
 
 class NetworkClient:
-    def __init__(self, window_class, player_renderer_class, packet_rate : float = 0.01):
+    def __init__(self, window_class, player_renderer_class, ip_addr:str, port:int = 42069, packet_rate : float = 0.01):
         self.socket = socket.socket()
-        if os.path.isfile("NetworkSettings.json"):
-            with open("NetworkSettings.json") as networkSettings:
-                self.networkSettings = load(networkSettings)
-        else:
-            with open("NetworkSettings.json", "w") as networkSettings:
-                self.networkSettings = {
-                    "ip":"127.0.0.1",
-                    "port":42069
-                }
-                dump(self.networkSettings, networkSettings)
-
-        self.socket.connect((self.networkSettings["ip"], self.networkSettings["port"]))
+        self.socket.connect((ip_addr, port))
         
         self.renderer_class = player_renderer_class
 

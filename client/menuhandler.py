@@ -1,4 +1,4 @@
-from utils.ui import panel, text
+from client.ui import panel, text
 from typing_extensions import overload
 
 class menu:

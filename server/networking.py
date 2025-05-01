@@ -1,4 +1,4 @@
-from utils import modelLoader
+from server import modelLoader
 
 import socket, _thread, time, ast
 import glm, os.path, random
@@ -8,10 +8,10 @@ class server_states:
     in_game = 1
 
 class Server:
-    def __init__(self, sending_rate : float = 0.05):
+    def __init__(self, port:int = 42069, sending_rate : float = 0.05):
         # Creates the server socket
         self.socket = socket.socket()
-        self.socket.bind(("0.0.0.0", 42069))
+        self.socket.bind(("0.0.0.0", port))
 
         # Sets the packet sending rate
         self.packet_rate = sending_rate
@@ -20,7 +20,7 @@ class Server:
         self.server_state = server_states.in_lobby
         self.server_map = None
 
-        self.get_maps = lambda : ["'"+map_file+"'" for map_file in os.listdir(".") if map_file.endswith(".gltf")]
+        self.get_maps = lambda : ["'"+map_file+"'" for map_file in os.listdir("maps\\") if map_file.endswith(".gltf")]
         self.get_voted_maps = lambda : {map : 0 for map in self.get_maps()}
 
         self.maps = self.get_maps()
@@ -72,9 +72,11 @@ class Server:
         return winning_maps[random.randint(0,len(winning_maps)-1)]
 
     def update(self):
-        client_socket, client_addr = self.socket.accept()
+        while True:
+            client_socket, client_addr = self.socket.accept()
+            print("accepted connection from " + str(client_addr))
 
-        _thread.start_new_thread(self.client_thread, (client_socket,))
+            _thread.start_new_thread(self.client_thread, (client_socket,))
 
     def client_thread(self, client_socket : socket.socket):
         client_socket.send("welcome to the server!".encode())
@@ -216,7 +218,7 @@ class Server:
                 self.player_sockets[player_idx] = (False, player_idx)
                 self.players[player_idx] = (False, player_idx)
                 
-                #print(e)
+                print(e)
 
                 # Tell all players that this player left the server
                 packet = "playerDisconnect|"

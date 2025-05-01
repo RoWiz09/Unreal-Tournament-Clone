@@ -1,23 +1,20 @@
 from OpenGL.GL import *
-import glm, numpy as np
+import glm
+import ast
 
 class ShaderProgram():
-    def __init__(self, vertex_path, fragment_path):
-        with open(vertex_path, "r") as file:
-            vertexShaderSource = file.read()
+    def __init__(self, vertex_shader_source:str, fragment_shader_source):
+        vertex_shader_source = ast.literal_eval("'''"+vertex_shader_source.replace("#version 330 core", "")+"'''")
 
         vertexShader = glCreateShader(GL_VERTEX_SHADER)
-        glShaderSource(vertexShader, vertexShaderSource)
+        glShaderSource(vertexShader, "#version 330 core\n"+vertex_shader_source)
         glCompileShader(vertexShader)
 
         if glGetShaderiv(vertexShader, GL_COMPILE_STATUS) != GL_TRUE:
             raise RuntimeError(glGetShaderInfoLog(vertexShader))
 
-        with open(fragment_path, "r") as file:
-            fragmentShaderSource = file.read()
-
         fragmentShader = glCreateShader(GL_FRAGMENT_SHADER)
-        glShaderSource(fragmentShader, fragmentShaderSource)
+        glShaderSource(fragmentShader, fragment_shader_source)
         glCompileShader(fragmentShader)
 
         if glGetShaderiv(fragmentShader, GL_COMPILE_STATUS) != GL_TRUE:

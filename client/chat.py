@@ -1,6 +1,6 @@
-from utils import input_lib as in_lib
-from utils.font import Font
-from utils import ui
+from client import input_lib as in_lib
+from client.font import Font
+from client import ui
 
 import numpy as np
 import glfw

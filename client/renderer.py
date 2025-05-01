@@ -1,6 +1,6 @@
-from utils import networking
-from utils import collision
-from utils import mesh
+from client import networking
+from client import collision
+from client import mesh
 import OpenGL.GL as GL
 import time, random
 import ctypes, glm
@@ -50,8 +50,8 @@ class WorldRenderer:
         rendering = False
 
 class player_renderer:
-    def __init__(self, network : networking.NetworkClient, me = False):
-        verts, triangles = mesh.load_obj("game_cube.obj")
+    def __init__(self, data:str, network : networking.NetworkClient, me = False):
+        verts, triangles = mesh.load_obj(data)
         self.verticies = (len(verts)//8)*3
 
         self.network = network
