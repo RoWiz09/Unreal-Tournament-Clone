@@ -4,5 +4,4 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Includes: Networking, gltf model loading, and lighting.
 
 ## How to play
-To play the game, first you will need a server. Once you have one of those, install the server directory and open terminal inside of it. then run main.py.\
-On your main computer, install and cd into the client directory, and run the main.py file inside of it.
+To play in a LAN game, all you need to do is comile the gamedata directory into a redfile with REDcompiler.py, then run main.py and click host game.
