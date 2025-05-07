@@ -1,0 +1,15 @@
+{
+    "weapontype":0,
+    "weaponmodel":"debug_gun.obj",
+    
+    "weaponscale":0.2,
+
+    "max_ammunition":50,
+    "fire_rate":0.1,
+    "reload_time":2,
+
+    "damage_type":0,
+
+    "hitscan":true,
+    "max_range":50
+}

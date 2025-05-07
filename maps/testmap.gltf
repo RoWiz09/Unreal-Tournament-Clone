@@ -435,7 +435,9 @@
 		},
 		{
 			"extras":{
-				"Weapon":"debug_gun"
+				"Weapon":"debug_gun",
+				"Spawnrate":1,
+				"SpawnOnLoad":true
 			},
 			"name":"WeaponSpawn",
 			"translation":[

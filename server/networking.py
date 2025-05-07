@@ -1,4 +1,5 @@
 from server import modelLoader
+from server.hitbox import hitbox
 
 import socket, _thread, time, ast
 import glm, os.path, random
@@ -39,6 +40,7 @@ class Server:
 
         # Initalizes the player list
         self.players : list[tuple[bool, int]] = []
+        self.player_hitboxes : list[hitbox] = []
         self.player_sockets : list[socket.socket] = []
         self.used_sockets : list[bool] = []
 
@@ -49,6 +51,7 @@ class Server:
 
         # Initalizes the sending list
         self.sending = []
+        self.weapon_spawners : list[modelLoader.weapon_spawnpoint] = []
 
         self.voted_players = 0
 
@@ -77,6 +80,27 @@ class Server:
             print("accepted connection from " + str(client_addr))
 
             _thread.start_new_thread(self.client_thread, (client_socket,))
+
+    def update_map(self):
+        send_list = []
+        if self.server_state == server_states.in_game:
+            for weapon_spawner in self.weapon_spawners:
+                pack = weapon_spawner.update()
+                if pack:
+                    for sock in range(len(self.player_sockets)):
+                        if not self.used_sockets[sock]:
+                            self.used_sockets[sock] = True
+                            
+                            pack_size_pack = "spawnSize|"
+                            pack_size_pack += str(len(pack)) + ","
+
+                            self.player_sockets[sock].send(pack_size_pack.encode())
+                            
+                            time.sleep(0.25)
+
+                            self.player_sockets[sock].send(pack.encode())
+                            
+                            self.used_sockets[sock] = False
 
     def client_thread(self, client_socket : socket.socket):
         client_socket.send("welcome to the server!".encode())
@@ -140,7 +164,6 @@ class Server:
 
         while True:
             try:
-                # Let's not leak memory, shall we?
                 sending.clear()
 
                 # Recive the packet sent by the player
@@ -166,17 +189,20 @@ class Server:
                             packet += str(pos.z) + ","
                             sending.append(packet.encode())
 
+                    # Handle getServerState packets
                     elif packet[0] == "getServerState":
                         self.used_sockets[player_idx] = True
                         packet = "serverState|"+str(self.server_state)
                         client_socket.send(packet.encode())
                         self.used_sockets[player_idx] = False
 
+                    # Handle getServerMaps packets
                     elif packet[0] == "getServerMaps":
                         self.used_sockets[player_idx] = True
                         client_socket.send(",".join(self.maps).encode())
                         self.used_sockets[player_idx] = False
 
+                    # Handle voting packets
                     elif packet[0] == "voted":
                         if "'"+packet[1]+"'" in self.map_votes:
                             self.map_votes["'"+packet[1]+"'"] += 1
@@ -184,10 +210,12 @@ class Server:
 
                         self.lobby_handler()
                     
+                    # Handle chat packets
                     elif "chatmsg" in packet[0]:
                         msg = packet[0].split("::")
                         self.send_to_all(client_socket, str("chatmsg::"+msg[1]).encode())
                     
+                    # Handle mapRequest packets
                     elif packet[0] == "mapRequest":
                         self.used_sockets[player_idx] = True
                         if self.server_state == server_states.in_game:
@@ -217,8 +245,6 @@ class Server:
                 print("client disconnected!")
                 self.player_sockets[player_idx] = (False, player_idx)
                 self.players[player_idx] = (False, player_idx)
-                
-                print(e)
 
                 # Tell all players that this player left the server
                 packet = "playerDisconnect|"
@@ -226,7 +252,7 @@ class Server:
                 self.send_to_all(client_socket, packet.encode())
 
                 # Exit the thread
-                quit()
+                raise e
 
     def add_to_sending(self, sendable_data : bytes):
         """

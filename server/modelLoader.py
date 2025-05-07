@@ -1,6 +1,13 @@
 import json
 import struct
-import glm
+import time
+
+class spawnable:
+    def __init__(self, verts:list):
+        self.verts = verts
+
+    def spawn(self):
+        return "spawn|"+str(self.verts)
 
 class light:
     def __init__(self, light_type: str, light_color: tuple, light_position: tuple, light_intensity: float):
@@ -34,10 +41,105 @@ class spawnpoint:
         packet += str(self.team)+"\\"
 
         return packet
+    
+class weapon_spawnpoint:
+    def __init__(self, pos:tuple, weapon_type:str, spawnRate:float, spawnOnLoad:bool=False):
+        """
+            A weapon spawnpoint. 
+            ## --- parameters ---
+            > `pos`: The position of the spawnpoint in 3d space.\n
+            > `weapon`: The name of the weapon to spawn. Data for this weapon should be stored in the weapons directory.\n
+            > `spawnRate`: How long it takes for the weapon to spawn.
+            > `spawnOnLoad`: If the spawner should trigger on map load. Defaults to no.
+        """
+        self.pos = pos
 
+        with open("weapons\\%s.json"%weapon_type) as weaponFile:
+            self.weapon_data = json.load(weaponFile)
+
+        self.weapon = spawnable(load_weapon_obj(self.weapon_data["weaponmodel"]))
+        self.spawnRate = spawnRate
+        self.spawnOnLoad = spawnOnLoad
+
+        self.timer = time.time()
+        self.timer_mod = 0
+
+        self.has_weapon = False
+
+    def update(self):
+        if self.timer-self.timer_mod >= self.spawnRate:
+            self.has_weapon = True
+
+            self.timer_mod = self.timer
+
+            packet = self.weapon.spawn()
+            return packet
+        
+        else:
+            self.timer = time.time()
+            
 class spawnpointError(Exception):
     def __init__(self, *args):
         super().__init__(*args)
+
+def load_weapon_obj(file_name:str):
+    with open("weapons\\"+file_name) as file:
+        file_data = file.read()
+        file.close()
+
+    vertices = []
+    tex_coords = []
+    normals = []
+    faces = []
+
+    for line in file_data.split("\n"):
+        parts = line.strip().split()
+        if not parts:
+            continue
+        
+        if parts[0] == "v":  # Vertex position
+            vertices.append(tuple(map(float, parts[1:4])))
+
+        elif parts[0] == "vt":  # Texture coordinates (UVs)
+            tex_coords.append(tuple(map(float, parts[1:3])))  # Only take u, v
+
+        elif parts[0] == "vn":  # Vertex normals
+            normals.append(tuple(map(float, parts[1:4])))
+
+        elif parts[0] == "f":  # Face indices
+            face = []
+            for p in parts[1:]:
+                indices = p.split('/')
+                
+                v_idx = int(indices[0]) - 1
+                vt_idx = int(indices[1]) - 1 if len(indices) > 1 and indices[1] else None
+                vn_idx = int(indices[2]) - 1 if len(indices) > 2 and indices[2] else None
+
+                face.append((v_idx, vt_idx, vn_idx))
+            if len(face) == 3:
+                faces.append(face)
+            elif len(face) == 4:  
+                faces.append([face[0], face[1], face[2]])  # Triangle 1
+                faces.append([face[0], face[2], face[3]])  # Triangle 2
+            else:
+                raise TypeError(f"ERROR: polygon with {len(face)} vertices not supported")
+
+    out = []
+    for face in faces:
+        for v_idx, vt_idx, vn_idx in face:
+            out.extend(vertices[v_idx])
+            
+            if vt_idx is not None and vt_idx < len(tex_coords):
+                out.extend(tex_coords[vt_idx])
+            else:
+                out.extend([0.0, 0.0])
+
+            if vn_idx is not None and vn_idx < len(normals):
+                out.extend(normals[vn_idx])
+            else:
+                out.extend([0.0, 0.0, 1.0])
+
+    return out
 
 def load_gltf(filename:str):
     has_blue_spawnpoint = False
@@ -52,6 +154,7 @@ def load_gltf(filename:str):
     faces = []
     lights = []
     spawns = []
+    weapon_spawns = []
 
     # Read binary buffer
     buffer_uri = gltf["buffers"][0]["uri"]
@@ -118,6 +221,12 @@ def load_gltf(filename:str):
                         has_red_spawnpoint = "Red" == node["extras"]["Team"]
                 else:
                     print(spawnpointError("The spawnpoint %s is invalid. Add extra data to validate it." % node["name"]))
+
+            elif node["name"].startswith("WeaponSpawn"):
+                if "extras" in node and "Weapon" in node["extras"]:
+                    weapon_spawns.append(weapon_spawnpoint(node["translation"], node["extras"]["Weapon"], node["extras"]["Spawnrate"], node["extras"]["SpawnOnLoad"]))
+                else:
+                    print(spawnpointError("The weapon spawnpoint %s is invalid. Add extra data to validate it." % node["name"]))
 
     if not has_blue_spawnpoint:
         print(spawnpointError("The map %s is missing a blue spawnpoint. Strange behavior may occur."%filename.removesuffix(".gltf")))
