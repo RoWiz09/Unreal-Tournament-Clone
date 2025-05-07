@@ -103,9 +103,6 @@ class Server:
                             self.used_sockets[sock] = False
 
     def client_thread(self, client_socket : socket.socket):
-        client_socket.send("welcome to the server!".encode())
-        time.sleep(0.01)
-
         player_idx = False
 
         # get the client's playerID
@@ -145,114 +142,27 @@ class Server:
                 self.red_team.append(player_idx)
                 team = "Red"
         
-        # Send the playerID back to the client
-        packet:str = "max_players|"
-        packet += str(self.max_players)+","
-        packet += "my_id|"
-        packet += str(player_idx)+","
-        packet += "my_team|"
-        packet += str(team)+","
-        client_socket.send(packet.encode())
+        # Send the server data back to the client
+        packet = "max_players."
+        packet += str(self.max_players)
+
+        self.send(client_socket, packet.encode())
+
+        packet = "my_id."
+        packet += str(player_idx)
+
+        self.send(client_socket, packet.encode())
+
+        packet = "my_team."
+        packet += str(team)
+
+        self.send(client_socket, packet.encode())
         
         # Send the new client's connection packet to all other clients
-        packet = "connection|"
-        packet += str(player_idx)+","
+        packet = "connection."
+        packet += str(player_idx)
 
-        self.send_to_all(client_socket, packet.encode())
-
-        sending = []
-
-        while True:
-            try:
-                sending.clear()
-
-                # Recive the packet sent by the player
-                msg = client_socket.recv(1024)
-                msg = msg.decode()
-
-                # Split all packets sent
-                packets = msg.split(",")
-
-                for packet in packets:
-                    packet = packet.split("|")
-
-                    # Player Position update packet handling
-                    if packet[0] == "playerPosTransformUpdate":
-                        if len(packet) == 4:
-                            pos = glm.vec3(float(packet[1]),float(packet[2]),float(packet[3]))
-
-                            # Send new player position to all clients
-                            packet = "playerPosTransformUpdate|"
-                            packet += str(player_idx) + "|"
-                            packet += str(pos.x) + "|"
-                            packet += str(pos.y) + "|"
-                            packet += str(pos.z) + ","
-                            sending.append(packet.encode())
-
-                    # Handle getServerState packets
-                    elif packet[0] == "getServerState":
-                        self.used_sockets[player_idx] = True
-                        packet = "serverState|"+str(self.server_state)
-                        client_socket.send(packet.encode())
-                        self.used_sockets[player_idx] = False
-
-                    # Handle getServerMaps packets
-                    elif packet[0] == "getServerMaps":
-                        self.used_sockets[player_idx] = True
-                        client_socket.send(",".join(self.maps).encode())
-                        self.used_sockets[player_idx] = False
-
-                    # Handle voting packets
-                    elif packet[0] == "voted":
-                        if "'"+packet[1]+"'" in self.map_votes:
-                            self.map_votes["'"+packet[1]+"'"] += 1
-                            self.voted_players += 1
-
-                        self.lobby_handler()
-                    
-                    # Handle chat packets
-                    elif "chatmsg" in packet[0]:
-                        msg = packet[0].split("::")
-                        self.send_to_all(client_socket, str("chatmsg::"+msg[1]).encode())
-                    
-                    # Handle mapRequest packets
-                    elif packet[0] == "mapRequest":
-                        self.used_sockets[player_idx] = True
-                        if self.server_state == server_states.in_game:
-                            server_map, lights, spawnpoints = modelLoader.load_gltf(self.server_map.removesuffix(".gltf"))
-                            packet = "map|"
-                            packet += str(server_map)+"\\"
-                            for light in lights:
-                                packet += light.to_packet()
-
-                            for spawnpoint in spawnpoints:
-                                packet += spawnpoint.to_packet()
-
-                            map_size_packet = "mapSize|"
-                            map_size_packet += str(len(packet.encode()))
-                            client_socket.send(map_size_packet.encode())
-
-                            time.sleep(0.25)
-
-                            client_socket.send(packet.encode())
-
-                        self.used_sockets[player_idx] = False
-
-                self.send_to_all_list(client_socket,sending)
-
-            except Exception as e:
-                # Reset the server slot for this player
-                print("client disconnected!")
-                self.player_sockets[player_idx] = (False, player_idx)
-                self.players[player_idx] = (False, player_idx)
-
-                # Tell all players that this player left the server
-                packet = "playerDisconnect|"
-                packet += str(player_idx)+","
-                self.send_to_all(client_socket, packet.encode())
-
-                # Exit the thread
-                raise e
+        self.send_to_all_excluding(client_socket, packet.encode())
 
     def add_to_sending(self, sendable_data : bytes):
         """
@@ -260,36 +170,58 @@ class Server:
         """
         self.sending.append(sendable_data)
 
-    def start_sending(self):
-        while True:
-            for socket in self.player_sockets:
-                for sendable in self.sending:
-                    try:
-                        socket.send(sendable)
-                    except:
-                        continue
-
-            self.sending = []
-
-            time.sleep(self.packet_rate)
-
-    def send_to_all(self, client_socket : socket.socket, data : bytes):
+    def send_to_all_excluding(self, client_socket : socket.socket, data : bytes):
         """
-        Sends `data` to all clients besides from `client_socket`
+            Sends `data` to all clients, excluding `client_socket`
         """
-        for client in self.player_sockets:
-            if not self.used_sockets[self.player_sockets.index(client)]:
-                if client != client_socket and client:
-                    if isinstance(client, socket.socket):
-                        client.send(data) 
+        
+        def send(client):
+            if client != client_socket and client:
+                if isinstance(client, socket.socket):
+                    client.send("sp".encode())
+                    for bytes in range(0, len(data), 2):
+                        if len(data)-bytes < 2:
+                            data.join("|".encode())
+                        client.send(data[bytes:bytes+2])
+                    client.send("ep".encode())
 
-    def send_to_all_list(self, client_socket : socket.socket, data : list[bytes]):
+        list(map(send, self.player_sockets))
+
+    def send_to_all(self, data : bytes):
         """
-        Sends `data` to all clients besides from `client_socket`
+            Sends `data` to all clients
         """
-        for client in self.player_sockets:
-            if not self.used_sockets[self.player_sockets.index(client)]:
-                for packet in data:
-                    if client != client_socket and client:
-                        if isinstance(client, socket.socket):
-                            client.send(packet)
+        
+        def send(client):
+            if client:
+                if isinstance(client, socket.socket):
+
+                    if len(data)%2 != 0:
+                        data = data.decode().join("|").encode()
+
+                    client.send("sp".encode())
+
+                    for bytes in range(0, len(data), 2):
+                        print(data[bytes:bytes+2])
+                        client.send(data[bytes:bytes+2])
+
+                    client.send("ep".encode())
+
+        list(map(send, self.player_sockets))
+
+    def send(self, client:socket.socket, data:bytes):
+        """
+            Sends `data` to `client`, two bytes at a time
+        """
+
+        print(data)
+
+        if len(data)%2 != 0:
+            data = data + "|".encode()
+
+        print(data)
+
+        client.send("sp".encode())
+        for bytes in range(0, len(data), 2):
+            client.send(data[bytes:bytes+2])
+        client.send("ep".encode())

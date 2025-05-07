@@ -31,16 +31,28 @@ class NetworkClient:
         self.red_spawnpoints = []
         self.blue_spawnpoints = []
 
-        msg = self.socket.recv(1024).decode()
-
         self.sending = []
 
-        packet = self.socket.recv(1024).decode()
-        packet = packet.split(",")
+        for gd in range(3):
+            packet = self.socket.recv(2).decode()
+            if packet == "sp":
+                packet = ""
+                while True:
+                    packet_segment = self.socket.recv(2).decode()
+                    if packet_segment == "ep":
+                        break
 
-        max_player_count = int(packet[0].split("|")[1])
-        self.player_idx = int(packet[1].split("|")[1])
-        self.team = packet[2].split("|")[1]
+                    else:
+                        packet += packet_segment
+
+            packet = packet.strip("|")
+
+            if gd == 0:
+                max_player_count = int(packet.split(".")[1])
+            elif gd == 1:
+                self.player_idx = int(packet.split(".")[1])
+            elif gd == 2:
+                self.team = packet.split(".")[1]
 
         for i in range(max_player_count):
             self.window.network_player_renderers.append(i)
